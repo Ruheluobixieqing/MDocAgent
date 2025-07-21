@@ -2,6 +2,13 @@
 data/
 
 # 模型
+models/colbertv2.0/
+models/colpali-3b-mix-448-base/
+models/colpali/
 
 # 临时文件
 tmp/
+
+__pycache__/
+
+.ragatouille/
