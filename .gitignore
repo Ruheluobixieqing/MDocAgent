@@ -6,6 +6,9 @@ models/colbertv2.0/
 models/colpaligemma-3b-mix-448-base/
 models/colpali/
 
+# 输出文件
+output/
+
 # 临时文件
 tmp/
 
