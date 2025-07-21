@@ -6,6 +6,7 @@ We propose MDocAgent, a novel multi-modal multi-agent framework for document que
 
 ![main_fig](media/main_fig.jpg)
 
+
 ## Requirements
 
 1. Clone this repository and navigate to MDocAgent folder
