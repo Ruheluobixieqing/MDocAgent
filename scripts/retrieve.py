@@ -1,6 +1,10 @@
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# 应用AdamW补丁
+from fix_adamw_patch import *
+
 from mydatasets.base_dataset import BaseDataset
 from retrieval.base_retrieval import BaseRetrieval
 import hydra
@@ -16,7 +20,10 @@ def main(cfg):
     
     dataset = BaseDataset(cfg.dataset)
     retrieval_model:BaseRetrieval = retrieval_class(cfg.retrieval)
-    retrieval_model.find_top_k(dataset)
+    
+    # 检查是否有force_prepare参数
+    force_prepare = cfg.get('force_prepare', False)
+    retrieval_model.find_top_k(dataset, force_prepare=force_prepare)
 
 if __name__ == "__main__":
     main()

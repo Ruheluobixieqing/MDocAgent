@@ -1,0 +1,12 @@
+# 本地模型路径配置
+model_paths:
+  # Image Retrieval 模型
+  colpaligemma_base: "models/colpaligemma-3b-mix-448-base"
+  colpali_adapter: "models/colpali"
+  
+  # Text Retrieval 模型
+  colbert: "models/colbertv2.0"
+  
+  # 其他模型路径可以在这里添加
+  # qwen2vl: "models/qwen2vl"
+  # llama: "models/llama" 

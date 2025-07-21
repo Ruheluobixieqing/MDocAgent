@@ -4,6 +4,12 @@ from PIL import Image
 from tqdm import tqdm
 import os
 import pickle
+
+# 应用AdamW补丁
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from fix_adamw_patch import *
+
 from colpali_engine.models.paligemma_colbert_architecture import ColPali
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
 from colpali_engine.utils.colpali_processing_utils import process_images, process_queries
@@ -12,13 +18,35 @@ from transformers import AutoProcessor
 from mydatasets.base_dataset import BaseDataset
 from retrieval.base_retrieval import BaseRetrieval
 
+# 导入模型路径工具
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.model_utils import get_model_path
+
 class ColpaliRetrieval(BaseRetrieval):
     def __init__(self, config):
         self.config = config
-        model_name = "vidore/colpali"
-        self.model = ColPali.from_pretrained("vidore/colpaligemma-3b-mix-448-base", torch_dtype=torch.float32, device_map="auto").eval()
-        self.model.load_adapter(model_name)
-        self.processor = AutoProcessor.from_pretrained(model_name)
+        # 使用本地模型路径
+        try:
+            base_model_path = get_model_path('colpaligemma_base')
+            adapter_model_path = get_model_path('colpali_adapter')
+            
+            print(f"Loading base model from: {base_model_path}")
+            self.model = ColPali.from_pretrained(base_model_path, torch_dtype=torch.float32, device_map="auto").eval()
+            
+            print(f"Loading adapter from: {adapter_model_path}")
+            self.model.load_adapter(adapter_model_path)
+            
+            print(f"Loading processor from: {adapter_model_path}")
+            self.processor = AutoProcessor.from_pretrained(adapter_model_path)
+            
+        except Exception as e:
+            print(f"加载本地模型失败: {e}")
+            print("尝试使用在线模型...")
+            # 如果本地模型加载失败，回退到在线模型
+            model_name = "vidore/colpali"
+            self.model = ColPali.from_pretrained("vidore/colpaligemma-3b-mix-448-base", torch_dtype=torch.float32, device_map="auto").eval()
+            self.model.load_adapter(model_name)
+            self.processor = AutoProcessor.from_pretrained(model_name)
     
     def prepare(self, dataset: BaseDataset):
         os.makedirs(self.config.embed_dir, exist_ok=True)

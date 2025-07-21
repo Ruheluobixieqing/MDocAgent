@@ -3,8 +3,17 @@ import json
 from tqdm import tqdm
 from ragatouille import RAGPretrainedModel
 
+# 应用AdamW补丁
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from fix_adamw_patch import *
+
 from retrieval.base_retrieval import BaseRetrieval
 from mydatasets.base_dataset import BaseDataset
+
+# 导入模型路径工具
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.model_utils import get_model_path
 
 class ColbertRetrieval(BaseRetrieval):
     def __init__(self, config):
@@ -12,7 +21,15 @@ class ColbertRetrieval(BaseRetrieval):
     
     def prepare(self, dataset: BaseDataset):
         samples = dataset.load_data(use_retreival=True)
-        RAG = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
+        # 使用本地模型路径
+        try:
+            colbert_model_path = get_model_path('colbert')
+            print(f"Loading ColBERT model from: {colbert_model_path}")
+            RAG = RAGPretrainedModel.from_pretrained(colbert_model_path)
+        except Exception as e:
+            print(f"加载本地ColBERT模型失败: {e}")
+            print("尝试使用在线模型...")
+            RAG = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
         doc_index:dict = {}
         error = 0
         for sample in tqdm(samples):
