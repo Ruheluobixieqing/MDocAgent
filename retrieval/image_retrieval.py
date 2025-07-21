@@ -4,11 +4,10 @@ from PIL import Image
 from tqdm import tqdm
 import os
 import pickle
-
-# 应用AdamW补丁
 import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from fix_adamw_patch import *
+
+# 添加项目根目录到路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from colpali_engine.models.paligemma_colbert_architecture import ColPali
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
@@ -19,32 +18,65 @@ from mydatasets.base_dataset import BaseDataset
 from retrieval.base_retrieval import BaseRetrieval
 
 # 导入模型路径工具
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.model_utils import get_model_path
 
 class ColpaliRetrieval(BaseRetrieval):
     def __init__(self, config):
         self.config = config
+        
         # 使用本地模型路径
         try:
+            # 通过utils获取本地模型路径
             base_model_path = get_model_path('colpaligemma_base')
             adapter_model_path = get_model_path('colpali_adapter')
             
-            print(f"Loading base model from: {base_model_path}")
-            self.model = ColPali.from_pretrained(base_model_path, torch_dtype=torch.float32, device_map="auto").eval()
+            print(f"正在加载基础模型: {base_model_path}")
+            # 添加内存优化选项
+            self.model = ColPali.from_pretrained(
+                base_model_path, 
+                torch_dtype=torch.float16,  # 使用 float16 减少内存使用
+                device_map="cpu",           # 先加载到CPU，避免GPU内存问题
+                low_cpu_mem_usage=True,     # 低 CPU 内存使用
+            ).eval()
             
-            print(f"Loading adapter from: {adapter_model_path}")
+            # 如果GPU可用，尝试移动到GPU
+            if torch.cuda.is_available():
+                try:
+                    print("尝试将模型移动到GPU...")
+                    self.model = self.model.to("cuda")
+                    print("模型已移动到GPU")
+                except Exception as e:
+                    print(f"GPU内存不足，保持在CPU: {e}")
+            
+            print(f"正在加载适配器: {adapter_model_path}")
             self.model.load_adapter(adapter_model_path)
             
-            print(f"Loading processor from: {adapter_model_path}")
+            print(f"正在加载处理器: {adapter_model_path}")
             self.processor = AutoProcessor.from_pretrained(adapter_model_path)
             
         except Exception as e:
             print(f"加载本地模型失败: {e}")
-            print("尝试使用在线模型...")
+            print(f"错误类型: {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
+            print("回退到在线模型...")
             # 如果本地模型加载失败，回退到在线模型
             model_name = "vidore/colpali"
-            self.model = ColPali.from_pretrained("vidore/colpaligemma-3b-mix-448-base", torch_dtype=torch.float32, device_map="auto").eval()
+            self.model = ColPali.from_pretrained(
+                "vidore/colpaligemma-3b-mix-448-base", 
+                torch_dtype=torch.float16,  # 使用 float16 减少内存使用
+                device_map="cpu",           # 先加载到CPU，避免GPU内存问题
+                low_cpu_mem_usage=True,     # 低 CPU 内存使用
+            ).eval()
+            
+            # 如果GPU可用，尝试移动到GPU
+            if torch.cuda.is_available():
+                try:
+                    print("尝试将模型移动到GPU...")
+                    self.model = self.model.to("cuda")
+                    print("模型已移动到GPU")
+                except Exception as e:
+                    print(f"GPU内存不足，保持在CPU: {e}")
             self.model.load_adapter(model_name)
             self.processor = AutoProcessor.from_pretrained(model_name)
     
@@ -115,8 +147,8 @@ class ColpaliRetrieval(BaseRetrieval):
         
         return top_page_indices, top_page_scores
         
-    def find_top_k(self, dataset: BaseDataset, prepare=False):
-        document_embeds = self.load_document_embeds(dataset, force_prepare=prepare)
+    def find_top_k(self, dataset: BaseDataset, force_prepare=False):
+        document_embeds = self.load_document_embeds(dataset, force_prepare=force_prepare)
         top_k = self.config.top_k
         samples = dataset.load_data(use_retreival=True)
         for sample in tqdm(samples):
