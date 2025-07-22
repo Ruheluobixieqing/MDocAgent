@@ -5,9 +5,11 @@ data/
 models/colbertv2.0/
 models/colpaligemma-3b-mix-448-base/
 models/colpali/
+models/opt-2.7b/
+models/Qwen2-VL-7B-Instruct/
 
 # 输出文件
-output/
+outputs/
 
 # 临时文件
 tmp/
@@ -15,3 +17,8 @@ tmp/
 __pycache__/
 
 .ragatouille/
+
+# cursor
+
+# idea
+.idea/
