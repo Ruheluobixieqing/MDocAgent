@@ -12,10 +12,10 @@ dataset:
 
 retrieval:
   top_k: 10 # Top-k results returned during retrieval
-  cuda_visible_devices: '0'
+  cuda_visible_devices: ''
 
 mdoc_agent:
-  cuda_visible_devices: '0,1,2,3'
+  cuda_visible_devices: ''
   truncate_len: null # Used for debugging; set to null for normal use
   save_freq: 10 # Frequency of saving checkpoints
   ans_key: ans_${run-name} # Key name for generated answers during prediction

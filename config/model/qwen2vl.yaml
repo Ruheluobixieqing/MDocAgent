@@ -2,6 +2,6 @@ defaults:
   - base
   - _self_
 
-model_id: Qwen/Qwen2-VL-7B-Instruct
+model_id: models/Qwen2-VL-7B-Instruct
 module_name: models.qwen
 class_name: Qwen2VL

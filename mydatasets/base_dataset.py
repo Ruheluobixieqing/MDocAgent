@@ -143,8 +143,13 @@ class BaseDataset():
 
     def load_txt(self, file):
         max_length = self.config.max_character_per_page
-        with open(file, 'r') as file:
-            content = file.read()
+        try:
+            with open(file, 'r', encoding='utf-8') as file:
+                content = file.read()
+        except UnicodeDecodeError:
+            # 如果UTF-8失败，尝试其他编码
+            with open(file, 'r', encoding='gbk') as file:
+                content = file.read()
         content = content.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
         return content[:max_length]
     

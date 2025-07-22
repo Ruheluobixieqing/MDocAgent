@@ -1,3 +1,9 @@
+# windows下的虚拟环境
+.venv/
+pyproject.toml
+.python-version
+uv.lock
+
 # 原始数据
 data/
 

@@ -8,7 +8,7 @@ class Qwen2VL(BaseModel):
         super().__init__(config)
         max_pixels = 2048*28*28
         self.model = Qwen2VLForConditionalGeneration.from_pretrained(
-            self.config.model_id, torch_dtype="auto", device_map="balanced_low_0"
+            self.config.model_id, torch_dtype="auto", device_map="cpu"
         )
         self.processor = AutoProcessor.from_pretrained(self.config.model_id) # , max_pixels=max_pixels
         self.create_ask_message = lambda question: {
@@ -61,7 +61,7 @@ class Qwen2VL(BaseModel):
             padding=True,
             return_tensors="pt",
         )
-        inputs = inputs.to("cuda")
+        inputs = inputs.to("cpu")
 
         generated_ids = self.model.generate(**inputs, max_new_tokens=self.config.max_new_tokens)
         generated_ids_trimmed = [
@@ -97,7 +97,7 @@ class Qwen2_5VL(Qwen2VL):
     def __init__(self, config):
         self.config = config
         self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            self.config.model_id, torch_dtype="auto", device_map="balanced_low_0"
+            self.config.model_id, torch_dtype="auto", device_map="cpu"
         )
         self.processor = AutoProcessor.from_pretrained(self.config.model_id)
         self.create_ask_message = lambda question: {
